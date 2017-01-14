@@ -11562,8 +11562,8 @@ Number of Non-POIs in the Dataset: 94 (84.68%)
         <span class="p">(</span><span class="s1">&#39;skb&#39;</span><span class="p">,</span> <span class="n">SelectKBest</span><span class="p">())</span>
     <span class="p">])</span>
 <span class="n">param</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;pca__n_components&#39;</span><span class="p">:</span><span class="n">randint</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">19</span><span class="p">),</span>
-        <span class="s1">&#39;skb__k&#39;</span><span class="p">:</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">9</span><span class="p">)</span>
+        <span class="s1">&#39;pca__n_components&#39;</span><span class="p">:</span><span class="n">randint</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">19</span><span class="p">),</span>
+        <span class="s1">&#39;skb__k&#39;</span><span class="p">:</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
     <span class="p">}</span>
 </pre></div>
 
@@ -11578,6 +11578,9 @@ Number of Non-POIs in the Dataset: 94 (84.68%)
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Using the pipeline feature I will be able to iterate through parameters a set number of times. Each time and random integer between 8 and 18 will be selected for the PCA components and an integer between 1 and 8 will be selected for SelectKBest K value. Since we are selecting K features from the PCA dimensionality reduction, K must be less than n_components. Although the cut-off number 8 is not an optimized number, it will prove as a good starting point for our analysis.</p>
+<hr>
+<p>Edit: After looking at the parameters that made up the final estimator I saw that n_components and k both equated to 8. This gave me reason to slightly adjust these parameter values and observe the effect it would have on the final output metrics. After a few adjustments I found that a cut-off number of 9 was better suited for the given dataset and thus the changes were made to the 'param' section above.</p>
+<hr>
 <p>Next we will use the sklearn documentation for each of the classifiers listed to outline parameters for each model. This step is extremely important due to the fact that each algorithm is going to work differently depending on the size, shape and contents of the dataset. On top of this, within each algorithm, with the exception of Gaussian Naive Bayes, there are a number of adjustable parameters that will have a significant impact on the output of the respective algorithm.</p>
 <p>Let us take a look at the 'C' parameter in the SVM classifier. This happens to be a penalty parameter of the error term which is a function of the classifier. This term as default is set to C=1, but we don't know, for our particular dataset, if 1, 10, 50 or 150 is the most optimal value for C. Instead of creating the list [1, 10, 50, 150] and having the function GridSearch test each parameter in the list, I will set a minimum and maximum value, which is subject to fine tuning later, and having the function RandomSearch pick a random value between that minimum and maximum number. Two reasons that I will be using this method instead of GridSearch is first, I can adjust how many iterations I want to go through without having to arbitrarily pick and choose the numbers that I would like to keep. Second, the optimal number for any parameter is not likely going to be a 10, 50, 100 etc. and is more likely going to be some integer between those numbers like 42. Thus once I find the algorithm that I am comfortable spending more time with I can do a more thorough search on it's parameters.</p>
 
@@ -11716,13 +11719,12 @@ Number of Non-POIs in the Dataset: 94 (84.68%)
                                                 <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
             
         <span class="k">if</span> <span class="n">rs</span><span class="o">.</span><span class="n">best_score_</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
-            <span class="n">best_estimator</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">best_estimator_</span>
-            <span class="n">best_score</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">best_score_</span>
+            <span class="n">best_rs</span> <span class="o">=</span> <span class="n">rs</span>
             <span class="n">clf_name</span> <span class="o">=</span> <span class="n">clfs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
     
     <span class="k">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Total Run Time:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span>
     <span class="k">print</span> <span class="s2">&quot;Best Classifier:&quot;</span><span class="p">,</span> <span class="n">clf_name</span>
-    <span class="k">return</span> <span class="n">best_estimator</span>
+    <span class="k">return</span> <span class="n">best_rs</span>
 </pre></div>
 
 </div>
@@ -11803,7 +11805,7 @@ Number of Non-POIs in the Dataset: 94 (84.68%)
 <div class="prompt input_prompt">In&nbsp;[54]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">estimator</span> <span class="o">=</span> <span class="n">search_test_clf</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="n">classifiers</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">rs</span> <span class="o">=</span> <span class="n">search_test_clf</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="n">classifiers</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -11817,32 +11819,32 @@ Number of Non-POIs in the Dataset: 94 (84.68%)
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>Gaussian Naive Bayes ------------------------------------------
-Accuracy: 0.81267   Precision: 0.37216   Recall: 0.18050   F1: 0.24310
-Search/Fit Time: 4.195 s    Test Time: 2.256 s 
+Accuracy: 0.81250   Precision: 0.38859   Recall: 0.21800   F1: 0.27931
+Search/Fit Time: 6.524 s    Test Time: 3.066 s 
 
 Support Vector Machine ------------------------------------------
-Accuracy: 0.80558   Precision: 0.41072   Recall: 0.38300   F1: 0.39638
-Search/Fit Time: 49.297 s    Test Time: 2.325 s 
+Accuracy: 0.77617   Precision: 0.34017   Recall: 0.36500   F1: 0.35215
+Search/Fit Time: 15.539 s    Test Time: 6.066 s 
 
 Decision Tree Classifier ------------------------------------------
-Accuracy: 0.75725   Precision: 0.26457   Recall: 0.25650   F1: 0.26047
-Search/Fit Time: 5.375 s    Test Time: 2.018 s 
+Accuracy: 0.75750   Precision: 0.26103   Recall: 0.24850   F1: 0.25461
+Search/Fit Time: 8.721 s    Test Time: 2.886 s 
 
 K Neighbors Classifier ------------------------------------------
-Accuracy: 0.81067   Precision: 0.38376   Recall: 0.22450   F1: 0.28328
-Search/Fit Time: 6.804 s    Test Time: 3.122 s 
+Accuracy: 0.82575   Precision: 0.42902   Recall: 0.13750   F1: 0.20825
+Search/Fit Time: 10.648 s    Test Time: 4.251 s 
 
 Random Forest Classifier ------------------------------------------
-Accuracy: 0.78500   Precision: 0.25753   Recall: 0.15400   F1: 0.19274
-Search/Fit Time: 19.176 s    Test Time: 11.009 s 
+Accuracy: 0.79458   Precision: 0.30544   Recall: 0.18250   F1: 0.22848
+Search/Fit Time: 31.735 s    Test Time: 16.877 s 
 
 AdaBoost Classifier ------------------------------------------
-Accuracy: 0.43150   Precision: 0.20945   Recall: 0.86900   F1: 0.33754
-Search/Fit Time: 11.691 s    Test Time: 5.538 s 
+Accuracy: 0.35425   Precision: 0.19521   Recall: 0.92050   F1: 0.32211
+Search/Fit Time: 18.334 s    Test Time: 24.634 s 
 
 
-Total Run Time: 122.806 s
-Best Classifier: Support Vector Machine
+Total Run Time: 149.281 s
+Best Classifier: AdaBoost Classifier
 </pre>
 </div>
 </div>
@@ -11867,7 +11869,7 @@ Best Classifier: Support Vector Machine
 <div class="prompt input_prompt">In&nbsp;[55]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">dump_classifier_and_data</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">dump_classifier_and_data</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">best_estimator_</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12641,32 +12643,32 @@ QiUiIiJS038obFYPdTTfqgAAAABJRU5ErkJggg==
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>Gaussian Naive Bayes ------------------------------------------
-Accuracy: 0.83225   Precision: 0.49499   Recall: 0.32100   F1: 0.38944
-Search/Fit Time: 4.702 s    Test Time: 2.639 s 
+Accuracy: 0.83883   Precision: 0.52437   Recall: 0.35500   F1: 0.42338
+Search/Fit Time: 5.134 s    Test Time: 2.663 s 
 
 Support Vector Machine ------------------------------------------
-Accuracy: 0.80017   Precision: 0.38070   Recall: 0.31750   F1: 0.34624
-Search/Fit Time: 41.787 s    Test Time: 2.553 s 
+Accuracy: 0.79558   Precision: 0.37065   Recall: 0.32450   F1: 0.34604
+Search/Fit Time: 9.738 s    Test Time: 3.0 s 
 
 Decision Tree Classifier ------------------------------------------
-Accuracy: 0.79458   Precision: 0.35368   Recall: 0.28100   F1: 0.31318
-Search/Fit Time: 5.982 s    Test Time: 2.369 s 
+Accuracy: 0.79425   Precision: 0.35298   Recall: 0.28150   F1: 0.31321
+Search/Fit Time: 6.958 s    Test Time: 2.685 s 
 
 K Neighbors Classifier ------------------------------------------
-Accuracy: 0.83658   Precision: 0.51351   Recall: 0.37050   F1: 0.43044
-Search/Fit Time: 7.354 s    Test Time: 3.466 s 
+Accuracy: 0.83625   Precision: 0.51333   Recall: 0.33700   F1: 0.40688
+Search/Fit Time: 8.551 s    Test Time: 4.39 s 
 
 Random Forest Classifier ------------------------------------------
-Accuracy: 0.79717   Precision: 0.32994   Recall: 0.21050   F1: 0.25702
-Search/Fit Time: 20.204 s    Test Time: 11.664 s 
+Accuracy: 0.79450   Precision: 0.31910   Recall: 0.20550   F1: 0.25000
+Search/Fit Time: 24.217 s    Test Time: 14.078 s 
 
 AdaBoost Classifier ------------------------------------------
-Accuracy: 0.46225   Precision: 0.21415   Recall: 0.83400   F1: 0.34079
-Search/Fit Time: 12.209 s    Test Time: 9.469 s 
+Accuracy: 0.62217   Precision: 0.22858   Recall: 0.53350   F1: 0.32004
+Search/Fit Time: 15.294 s    Test Time: 16.261 s 
 
 
-Total Run Time: 124.398 s
-Best Classifier: K Neighbors Classifier
+Total Run Time: 112.97 s
+Best Classifier: AdaBoost Classifier
 </pre>
 </div>
 </div>
@@ -12726,7 +12728,8 @@ Best Classifier: K Neighbors Classifier
 <div class="prompt input_prompt">In&nbsp;[63]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">estimator</span> <span class="o">=</span> <span class="n">search_test_clf</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="n">classifiers</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">print</span> <span class="s2">&quot;5 Minute Run Time:&quot;</span>
+<span class="n">rs</span> <span class="o">=</span> <span class="n">search_test_clf</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="n">classifiers</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12739,13 +12742,41 @@ Best Classifier: K Neighbors Classifier
 
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>K Neighbors Classifier ------------------------------------------
-Accuracy: 0.83600   Precision: 0.51135   Recall: 0.36050   F1: 0.42287
-Search/Fit Time: 56.977 s    Test Time: 2.875 s 
+<pre>5 Minute Run Time:
+K Neighbors Classifier ------------------------------------------
+Accuracy: 0.85108   Precision: 0.57580   Recall: 0.40450   F1: 0.47518
+Search/Fit Time: 346.455 s    Test Time: 3.96 s 
 
 
-Total Run Time: 59.852 s
+Total Run Time: 350.415 s
 Best Classifier: K Neighbors Classifier
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[64]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">print</span> <span class="s2">&quot;Best Parameters:&quot;</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">best_params_</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Best Parameters: {&apos;knc__n_neighbors&apos;: 4, &apos;skb__k&apos;: 8, &apos;pca__n_components&apos;: 9, &apos;knc__p&apos;: 1, &apos;knc__weights&apos;: &apos;distance&apos;}
 </pre>
 </div>
 </div>
@@ -12759,23 +12790,135 @@ Best Classifier: K Neighbors Classifier
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>As it doesn't look like our classifier is getting any better I will overwrite the old output with this new 'bonus' output (estimator, dataset and feature list) for review.</p>
+<p>After performing a more in depth search on the K Neighbors Classifier, we find that we can increase the F1 score by another 10%. Being content with these results, I will overwrite the old output with this new 'bonus section' output (estimator, dataset and feature list) for review.</p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[64]:</div>
+<div class="prompt input_prompt">In&nbsp;[65]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">dump_classifier_and_data</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">dump_classifier_and_data</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">best_estimator_</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">)</span>
 </pre></div>
 
 </div>
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr>
+<h3 id="Summary">Summary<a class="anchor-link" href="#Summary">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The goal of the project was to create a classifier that is able to identify persons of interest (POIs), using publicly available financial and email features, with evaluation metric scores, recall and precision, greater than 0.3. Machine learning algorithms are helpful tools for these types of classification problems and can customized to suite the needs of the particular dataset.  A list of POIs has been provided for this dataset which means we should be using a supervised machine learning algorithm. Outliers in this dataset were detected visually and discretion was used to evaluate whether or not the outlier should remain in, or be removed from the dataset, based on validity and POI label status.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The features that were used in the dataset are as listed below. Some of these features were created from the original dataset and some of the original dataset features were removed as in described in the body of this project.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[66]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">no_poi_fl</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)</span>
+<span class="n">no_poi_fl</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;poi&quot;</span><span class="p">)</span>
+<span class="k">print</span> <span class="s2">&quot;No. Features:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">no_poi_fl</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">no_poi_fl</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>No. Features: 26 
+[&apos;salary&apos;, &apos;total_payments&apos;, &apos;bonus&apos;, &apos;deferred_income&apos;, &apos;expenses&apos;, &apos;other&apos;, &apos;long_term_incentive&apos;, &apos;restricted_stock&apos;, &apos;bonus/salary&apos;, &apos;stock/salary&apos;, &apos;pca_stocks&apos;, &apos;to_messages&apos;, &apos;from_poi_to_this_person&apos;, &apos;from_messages&apos;, &apos;from_this_person_to_poi&apos;, &apos;shared_receipt_with_poi&apos;, &apos;rec_poi/total_rec&apos;, &apos;sent_poi/total_sent&apos;, &apos;payments/rec_poi_ratio&apos;, &apos;payments/sent_poi_ratio&apos;, &apos;log-rec_poi_ratio(payments)&apos;, &apos;log-sent_poi_ratio(payments)&apos;, &apos;log-rec_poi_ratio(stock-salary)&apos;, &apos;log-sent_poi_ratio(stock-salary)&apos;, &apos;log-rec_poi_ratio(bonus-salary)&apos;, &apos;log-sent_poi_ratio(bonus-salary)&apos;]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the feature selection pipeline, we take these features and scale each of the features from 0 to 1 such that the principle component analysis (PCA) does no discriminate based on feature magnitude. After the scaling, we put all 26 features into the PCA which results in, in the case of our final estimator, 9 principle components which are an amalgamation of the 26 that had been selected. Following this step, we will do another 0 to 1 scaling of the PCA values, since PCA outputs both positive and negative values, and then select a random number of the best outputs created by PCA to make up the features that will go into the machine learning algorithms. This final number that is selected is less about the particular components of the PCA but more so I am trying to see what number of features work best for which classifiers.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the end, with our 'bonus features', we used the K Neighbors Classifier which ended up giving us the best scoring metrics and also happened to have one of the quickest run times. This classifier worked better than the others listed in the previous sections but it should be noted that a change in the number of features or the addition of any other features that were not thought of in this project could have a significant impact on the classifier is best suited for the dataset.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Each of the classifiers have a list of tuneable parameters that allow you to completely customize the algorithm for your dataset. The drawback of this customizability is that if the parameters are not properly tuned your algorithm will not perform to it's potential. The methodology I used for tuning the parameters of this dataset was that I would begin by guessing a range of parameter values for each classifier and then use RandomSearchCV to go through and assess different combinations of parameters. I would go back and change the parameter ranges if I found that the best performing parameters were close to, or equal to, the minimum or maximum value that I had set for the range. Additionally, if the classifiers run time was too long I would adjust some of the parameters such as the ensemble's n_estimator parameter.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Validation is the way in which you test your machine learning algorithm's performance. Ideally, with a large dataset, you could split the data into a training set and a testing set such that you train your algorithm first on a section of data and then test it on a separate section of data that the algorithm has not seen yet. A classic mistake might be using the same dataset to train your algorithm that you use to test your dataset, which introduces a significant amount of bias into your test results. For this dataset, since we had such a small number of POIs and a small dataset as a whole, we did not have the luxury of performing a single test/train split as the number of training POIs would be far too limited for the algorithm to get a true understanding of what it means to be a POI. In order to combat this, I used cross-validation method called StratifiedShuffleSplit. This function does 1000 different test/train splits and then averages the results across all of the trials. This allows us to get a good understanding for the classifier-parameter combination while not having to worry about which datapoints made it into the training set and which did not.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As stated earlier:
+"Precession and Recall are two performance metrics that work well together when dealing with datasets like this one, as they focus in on the number of correctly identified 'true' labels. Precision gives us the number of correctly predicted positives out of the total number of positive predicted labels. Recall, on the other hand, gives us the number of correctly predicted positives out of the total number of positive labels, in other words, what percentage of the true labels were we able to recall. The F1 score is a hybrid score of precision and recall which makes it a great evaluator for our classifier's parameters."</p>
+<p>The final estimator in this project was able to achieve the following scores: Precision: 0.57580, Recall: 0.40450 and F1: 0.47518. These values surpass the required precision and recall values of 0.3 by 92% and 35% respectively.</p>
+
+</div>
+</div>
 </div>
     </div>
   </div>

@@ -279,8 +279,8 @@ pipe = Pipeline(steps=[
         ('skb', SelectKBest())
     ])
 param = {
-        'pca__n_components':randint(8,19),
-        'skb__k':randint(1,9)
+        'pca__n_components':randint(9,19),
+        'skb__k':randint(1,10)
     }
 	
 names = []
@@ -367,28 +367,16 @@ def search_test_clf(n_iter, n_splits, clfs, dataset, feat_list, fp=False):
                                                 round(time()-t0, 3), "s", "\n"
             
         if rs.best_score_ > best_score:
-            best_estimator = rs.best_estimator_
-            best_score = rs.best_score_
+            best_rs = rs
             clf_name = clfs[0][i]
     
     print "\nTotal Run Time:", round(time()-start, 3), "s"
     print "Best Classifier:", clf_name
-    return best_estimator
+    return best_rs
 	
 #test_classifier(GaussianNB(), dataset, feature_list)
 
-def remove_classifier(target, clfs):
-    for i in range(0,len(clfs[0])):
-        if clfs[0][i] == target:
-            clfs[0].remove(clfs[0][i])
-            clfs[1].remove(clfs[1][i])
-            clfs[2].remove(clfs[2][i])
-            break
-			
-remove_classifier("Gaussian Naive Bayes", classifiers)
-remove_classifier("Decision Tree Classifier", classifiers)
-remove_classifier("Random Forest Classifier", classifiers)
-remove_classifier("AdaBoost Classifier", classifiers)
+
 
 #estimator = search_test_clf(25, 25, classifiers, dataset, feature_list)
 
@@ -414,11 +402,6 @@ abstract_df["poi"] = enron_df["poi"]
 #boolean to string is needed so that pairplot won't include poi as a feature
 abstract_df["poi"] = abstract_df["poi"].apply(boolean_to_string)
 
-features = ["log-sent_poi_ratio(payments)", "log-rec_poi_ratio(bonus-salary)",
-           "log-sent_poi_ratio(stock-salary)", "poi"]
-g = sns.pairplot(abstract_df[features], hue="poi")
-g.savefig("pair_abstract.png")
-
 abstract_df = abstract_df.drop("poi", 1)
 
 features_df = features_df.join(abstract_df)
@@ -426,9 +409,21 @@ feature_list = features_df.columns.tolist()
 feature_list.insert(0, feature_list.pop(feature_list.index('poi')))
 dataset = features_df.to_dict(orient='index')
 
+def remove_classifier(target, clfs):
+    for i in range(0,len(clfs[0])):
+        if clfs[0][i] == target:
+            clfs[0].remove(clfs[0][i])
+            clfs[1].remove(clfs[1][i])
+            clfs[2].remove(clfs[2][i])
+            break
+			
+remove_classifier("Gaussian Naive Bayes", classifiers)
+remove_classifier("Decision Tree Classifier", classifiers)
+remove_classifier("Random Forest Classifier", classifiers)
+remove_classifier("AdaBoost Classifier", classifiers)
 remove_classifier("Support Vector Machine", classifiers)
-estimator = search_test_clf(25, 25, classifiers, dataset, feature_list);
 
-#estimator = search_test_clf(100, 25, classifiers, dataset, feature_list)
+print "5 Minute Run Time:"
+rs = search_test_clf(100, 250, classifiers, dataset, feature_list)
 
-dump_classifier_and_data(estimator, dataset, feature_list)
+dump_classifier_and_data(rs.best_estimator_, dataset, feature_list)
